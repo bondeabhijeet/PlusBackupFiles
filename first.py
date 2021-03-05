@@ -20,13 +20,31 @@ print("Selected file is:", path)
 RecievedResponse = requests.post('https://api.anonfiles.com/upload', files = {'file' : open(path, 'rb' ) } ) # It is strongly recommended that you open files in binary mode. This is because Requests may attempt to provide the Content-Length header for you, and if it does this value will be set to the number of bytes in the file. Errors may occur if you open the file in text mode.
                                                                                           # https://www.tutorialspoint.com/requests/requests_file_upload.htm
 if (RecievedResponse.ok):
+  NameOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["name"]
+  SizeOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["size"]["readable"]
+  LongUrl = RecievedResponse.json()["data"]["file"]["url"]["full"]
+  ShortUrl = RecievedResponse.json()["data"]["file"]["url"]["short"]
+  FileID = RecievedResponse.json()["data"]["file"]["metadata"]["id"]
   print(">> File is uploaded")
-  print(">> NAME:     ", RecievedResponse.json()["data"]["file"]["metadata"]["name"])
-  print(">> SIZE:     ", RecievedResponse.json()["data"]["file"]["metadata"]["size"]["readable"])
-  print(">> LONG URL: ", RecievedResponse.json()["data"]["file"]["url"]["full"])
-  print(">> SHORT URL:", RecievedResponse.json()["data"]["file"]["url"]["short"])
-  print(">>>> FILE ID:", RecievedResponse.json()["data"]["file"]["metadata"]["id"], " (Save this file id if you want to retrive this file in future without the URL.)")
+  print(">> NAME:     ", NameOfFile)
+  print(">> SIZE:     ", SizeOfFile)
+  print(">> LONG URL: ", LongUrl)
+  print(">> SHORT URL:", ShortUrl)
+  print(">>>> FILE ID:", FileID, " (Save this file id if you want to retrive this file in future without the URL.)")
 else:
   print(ErrorCodes[ str(RecievedResponse.json()["error"]["code"])])
+
+
+root = tkinter.Tk()
+
+TextFilePath = filedialog.asksaveasfilename(parent = root, initialdir = "C:\\", defaultextension = ".txt", filetypes = [("Text File", '.txt')], title = "Saving the link in text file", initialfile = f'{NameOfFile}.txt')
+
+ToBeWrittenInFile = NameOfFile + " || " + ShortUrl + SizeOfFile + LongUrl
+with open( TextFilePath, 'w') as TextWriting:
+  TextWriting.write(f"{NameOfFile}  ||  {ShortUrl}  ||  {SizeOfFile}  ||  {LongUrl}")
+  
+root.destroy()
+
+
 print("PRESS ENTER TO CONTINUE")
 input()
