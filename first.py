@@ -1,6 +1,7 @@
 import requests
 import tkinter
 from tkinter import filedialog
+import sys
 
 
 ErrorCodes = {"10":"ERROR: File is not provided", "11":"ERROR: File is empty", "12":"ERROR: File is invalid", "20":"ERROR: Wait for an hour before the next upload", "21":"ERROR: wait for 24 hours before you're next upload", "22":"ERROR: Too many bytes sent in a hour, wait for 1 hour", "23":"ERROR: Too many bytes sent in a day, wait for 24 hours", "30":"ERROR: File type not supported by the server", "31":"ERROR: File size is too big", "32":"ERROR: File banned", "40":"ERROR: System error"}
@@ -15,10 +16,17 @@ root.title('BackupPlusFiles') # Name given the the popup window
 path = filedialog.askopenfilename(parent = root, title = "File To Backup", initialdir = "C:\\", filetypes = [("All Files", ".*")] ) # The askopenfilename() function returns the file name that you selected. here "All Files" is a Label (So it can be given any name)
 root.destroy()
 
-print("Selected file is:", path)
 
-RecievedResponse = requests.post('https://api.anonfiles.com/upload', files = {'file' : open(path, 'rb' ) } ) # It is strongly recommended that you open files in binary mode. This is because Requests may attempt to provide the Content-Length header for you, and if it does this value will be set to the number of bytes in the file. Errors may occur if you open the file in text mode.
-                                                                                          # https://www.tutorialspoint.com/requests/requests_file_upload.htm
+print("Selected file is:", path)
+try:
+    RecievedResponse = requests.post('https://api.anonfiles.com/upload', files = {'file' : open(path, 'rb' ) } ) # It is strongly recommended that you open files in binary mode. This is because Requests may attempt to provide the Content-Length header for you, and if it does this value will be set to the number of bytes in the file. Errors may occur if you open the file in text mode.
+                                                                                      # https://www.tutorialspoint.com/requests/requests_file_upload.htm
+
+except:
+    print("ERROR... SELECT A FILE TO BACKUP")
+    print("Press enter to continue")
+    input()
+    sys.exit()
 if (RecievedResponse.ok):
   NameOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["name"]
   SizeOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["size"]["readable"]
@@ -34,17 +42,17 @@ if (RecievedResponse.ok):
 else:
   print(ErrorCodes[ str(RecievedResponse.json()["error"]["code"])])
 
+NameOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["name"]
 
 root = tkinter.Tk()
 
 TextFilePath = filedialog.asksaveasfilename(parent = root, initialdir = "C:\\", defaultextension = ".txt", filetypes = [("Text File", '.txt')], title = "Saving the link in text file", initialfile = f'{NameOfFile}.txt')
+# https://docs.python.org/3/library/dialog.html#tkinter.filedialog.SaveAs
 
-ToBeWrittenInFile = NameOfFile + " || " + ShortUrl + SizeOfFile + LongUrl
 with open( TextFilePath, 'w') as TextWriting:
   TextWriting.write(f"{NameOfFile}  ||  {ShortUrl}  ||  {SizeOfFile}  ||  {LongUrl}")
-  
-root.destroy()
 
+root.destroy()
 
 print("PRESS ENTER TO CONTINUE")
 input()
