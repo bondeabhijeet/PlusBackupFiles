@@ -22,7 +22,7 @@ def BackupFile(path, FileNumber):
                                                                                       # https://www.tutorialspoint.com/requests/requests_file_upload.htm                                                                       
     
         
-    if (RecievedResponse.ok):
+    if (RecievedResponse.ok):                    # This checks error codes. less than 400 returns True
         NameOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["name"]
         SizeOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["size"]["readable"]
         LongUrl = RecievedResponse.json()["data"]["file"]["url"]["full"]
@@ -43,15 +43,19 @@ def BackupFile(path, FileNumber):
         sys.exit()
 
 def FileName():
+
     Days = {'0':'Monday', '1':'Tuesday', '2':'Wednesday', '3':'Thrusday', '4':'Friday', '5':'Saturday', '6':'Sunday'}
     Month = {'1':'Jan', '2':'Feb', '3':'Mar', '4':'Apr', '5':'May', '6':'Jun', '7':'Jul', '8':'Aug', '9':'Sept', '10':'Oct', '11':'Nov', '12':'Dec'}
-    FileDayAndMonth = f'{Days[ str(time.localtime().tm_wday)] } {Month[ str(time.localtime().tm_mon)] }'
-    FileTime = "%02d-%02d-%02d" % (time.localtime().tm_hour, time.localtime().tm_min, time.localtime().tm_sec)
-    FileDate = "%04d-%02d-%02d" % (time.localtime().tm_year, time.localtime().tm_mon, time.localtime().tm_mday)
+
+    FileDayAndMonth = f'{Days[ str(time.localtime().tm_wday)] } {Month[ str(time.localtime().tm_mon)] }'         # Day and Month
+    FileTime = "%02d-%02d-%02d" % (time.localtime().tm_hour, time.localtime().tm_min, time.localtime().tm_sec)   # Time
+    FileDate = "%04d-%02d-%02d" % (time.localtime().tm_year, time.localtime().tm_mon, time.localtime().tm_mday)  # Date
+
     return( f'{FileDate} {FileTime} {FileDayAndMonth}.txt' )
 
 def WriteToFile(WriteMessage):
-    root = tkinter.Tk()
+    root = tkinter.Tk()         # Created the root/main window for GUI.
+    root.withdraw()             # Hides the root window that was created (but is still running).
 
     TextFilePath = filedialog.asksaveasfilename(parent = root, defaultextension = ".txt", filetypes = [("Text files", ".txt")], title = "Saving Text File", initialfile = FileName()) # the (initialdir = "C:\\") attribute is not filled coz if its absent then by default it takes the path to downloads folder. (although there is no official documentaion on this.)
     with open(TextFilePath, 'w') as TextWriting:
@@ -61,26 +65,27 @@ def WriteToFile(WriteMessage):
 
 # -------------------- SELECT FILES TO UPLOAD -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-root = tkinter.Tk()  # The root window is created. The root window is a main application window in our programs. It has a title bar and borders. These are provided by the window manager. It must be created before any other widgets.
-                     # root is the master window
-root.title('BackupPlusFiles') # Name given the the popup window
-paths = filedialog.askopenfilename(parent = root, title = "File To Backup", filetypes = [("All Files", ".*")], multiple = True ) # The askopenfilename() function returns the file name that you selected. here "All Files" is a Label (So it can be given any name)
-                                                                                                                                 # the (initialdir = "C:\\") attribute is not filled coz if its absent then by default it takes the path to downloads folder. (although there is no official documentaion on this.)
+root = tkinter.Tk()             # The root window is created. The root window is a main application window in our programs. It has a title bar and borders. These are provided by the window manager. It must be created before any other widgets.
+                                # root is the master window
+root.title('BackupPlusFiles')   # Name given the the popup window
+root.withdraw()                 # Hides the root window that was created (but is still running).
+paths = filedialog.askopenfilename(parent = root, title = "File To Backup", filetypes = [("All Files", ".*")], multiple = True ) # The askopenfilename() function returns the file name that you selected. Here "All Files" is a Label (So it can be any random string)
+                                                                                                                                 # the (initialdir = "C:\\") attribute is not filled coz if its absent then by default it takes the path to downloads folder. (although I havent found any official documentaion on this.)
 root.destroy()
 
 
 # -------------------- MAIN -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 for path in paths:
-  FileNumber += 1
+  FileNumber += 1               
   RecicvedMessage = BackupFile(path, FileNumber)
-  WriteMessage = WriteMessage +"\n" + RecicvedMessage
+  WriteMessage = WriteMessage +"\n" + RecicvedMessage       # WriteMessage is the message which has to be written in the text file (at last) and Recieved message is the message that is returned by the BackupFile() Function for each file.
 
-if (paths):
+if (paths):                                                 # After all the files are uploaded, creating the text file that will contain all the links.
     WriteToFile(WriteMessage)
-else:
-    print("\n\n No Output File Created... (no file was selected)\n\n")
+else:                                                       # If no files were selected.
+    print("\n\n[ NO FILE WAS SELECTED ]\n\n")
 
 # -------------------- HOLD THE SCREEN --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("PRESS ENTER TO CONTINUE")
+print("[ PRESS ENTER TO CONTINUE ] ", end = "") # Python’s print() function comes with a parameter called ‘end’. By default, the value of this parameter is ‘\n’, i.e. the new line character. You can end a print statement with any character/string using this parameter.
 input()
