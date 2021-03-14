@@ -51,15 +51,37 @@ def BackupFileToAnonynousfiles(path, FileNumber):
     if(RecievedResponse.ok):
         FileURL = RecievedResponse.json()['url']
         print(f'>> [ UPLOAD WAS SUCCESSFUL ]')
-        print(f'>> [ URL: {FileURL} ]\n\n')
-        print("----------------------------------------------------------------------------------------------------------")
+        print(f'>> [ URL: {FileURL} ]')
         return(f'|| {FileURL}')
     else:
         print("\n\n>>>> [ Upload was UNSUCCESSFUL. ]\n>>>> [ Press any key to Continue... ]\n\n")
         input()
         sys.exit()
 
+
+def BackupToGoFile(path, FileNumber):                                   # GOFILE IS IN BETA, SO ERRORS MIGHT OCCUR.
+    ServerInfo = requests.get('https://apiv2.gofile.io/getServer')      # Getting the server info for uploading file           
+    BestServerAvaliable = ServerInfo.json()['data']['server']           # Getting the best server avaliable to upload the file
+
+    print(f'>> [ Trying to UPLOAD file# 0{FileNumber} to server 3 ]\n')
+    files = {'file': open(path, 'rb')}
+    RecievedResponse = requests.post(f'https://{BestServerAvaliable}.gofile.io/uploadFile', files=files)
+    
+    if(RecievedResponse.ok):
+        FileURL = RecievedResponse.json()['data']['directLink']
+
+        print(f'>> [ UPLOAD WAS SUCCESSFUL ]')
+        print(f'>> [ URL: {FileURL} ]\n\n')
+        print("--------------------------------------------------------------------------------------------------------------------------------------------------------")
+        return(f'|| {FileURL}')
+    else:
+        print("\n\n>>>> [ Upload was UNSUCCESSFUL. ]\n>>>> [ Press any key to Continue... ]\n\n")
+        print(f'{RecievedResponse}')
+        return("|| Error uploading to GoFile ")
+        #input()
+        #sys.exit()
  
+
 def FileName():
 
     Days = {'0':'Monday', '1':'Tuesday', '2':'Wednesday', '3':'Thrusday', '4':'Friday', '5':'Saturday', '6':'Sunday'}
@@ -79,6 +101,7 @@ def WriteToFile(WriteMessage):
                                                                                                                                                                                       # FileName() auto-gives the name for that file which will be returned by the function FileName
     try:
         with open(TextFilePath, 'w') as TextWriting:
+            TextWriting.write("Format : [Name] [Anonfiles URL] [Anonfiles FileID] [Size] [GoFile URL] [Anonymousfiles URL]\n")
             TextWriting.write(WriteMessage)
         print(">> [ OUTPUT FILE CREATED ]\n")
         root.destroy()
@@ -99,6 +122,9 @@ paths = filedialog.askopenfilename(parent = root, title = "File To Backup", file
 root.destroy()
 
 
+        
+
+
 # -------------------- MAIN -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 for path in paths:
@@ -106,7 +132,8 @@ for path in paths:
   RecicvedMessageAnonfile = BackupFileToAnonfile(path, FileNumber)
   #WriteMessage = WriteMessage +"\n" + RecicvedMessageAnonfile       # WriteMessage is the message which has to be written in the text file (at last) and Recieved message is the message that is returned by the BackupFile() Function for each file.
   FileURLFromAnonymousfiles = BackupFileToAnonynousfiles(path, FileNumber)
-  WriteMessage = WriteMessage + f'\n {RecicvedMessageAnonfile} {FileURLFromAnonymousfiles}'
+  FileURLFromGoFile = BackupToGoFile(path, FileNumber)
+  WriteMessage = WriteMessage + f'\n{RecicvedMessageAnonfile} {FileURLFromGoFile} {FileURLFromAnonymousfiles}'
 if (paths):                                                 # After all the files are uploaded, creating the text file that will contain all the links.
     WriteToFile(WriteMessage)
 else:                                                       # If no files were selected.
