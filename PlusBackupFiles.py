@@ -1,7 +1,6 @@
 import requests
 import tkinter
 from tkinter import filedialog
-import sys
 import time
 
 msg = str()
@@ -18,8 +17,8 @@ def BackupFileToAnonfile(path, FileNumber):
     print("\nSelected file is:", path)
     print(f'>> [ Trying to UPLOAD file# 0{FileNumber} to server 1 ]\n')
 
-    RecievedResponse = requests.post('https://api.anonfiles.com/upload', files = {'file' : open(path, 'rb' ) } ) # It is strongly recommended that you open files in binary mode. This is because Requests may attempt to provide the Content-Length header for you, and if it does this value will be set to the number of bytes in the file. Errors may occur if you open the file in text mode.
-                                                                                      # https://www.tutorialspoint.com/requests/requests_file_upload.htm                                                                       
+    RecievedResponse = requests.post('https://api.anonfiles.com/upload', files = {'file' : open(path, 'rb' ) }) # It is strongly recommended that you open files in binary mode. This is because Requests may attempt to provide the Content-Length header for you, and if it does this value will be set to the number of bytes in the file. Errors may occur if you open the file in text mode.
+                                                                                                                # https://www.tutorialspoint.com/requests/requests_file_upload.htm                                                                       
       
     if (RecievedResponse.ok):                    # This checks error codes. less than 400 returns True
         NameOfFile = RecievedResponse.json()["data"]["file"]["metadata"]["name"]
@@ -38,15 +37,17 @@ def BackupFileToAnonfile(path, FileNumber):
     else:
         print(ErrorCodes[ str(RecievedResponse.json()["error"]["code"])])
         print("\n\n>>>> [ Upload was UNSUCCESSFUL. ]\n>>>> [ Press any key to Continue... ]\n\n")
-        input()
-        sys.exit()
+        return("|| Error uploading to anonfiles ")
+        #input()
+        #sys.exit()
 
 
 def BackupFileToAnonynousfiles(path, FileNumber):
     print(f'\n>> [ Trying to UPLOAD file# 0{FileNumber} to server 2 ]\n')
 
     file = {'file': open(path, 'rb')}
-    RecievedResponse = requests.post('https://api.anonymousfiles.io/', files= file)
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
+    RecievedResponse = requests.post('https://api.anonymousfiles.io/', files= file, headers= headers)
 
     if(RecievedResponse.ok):
         FileURL = RecievedResponse.json()['url']
@@ -55,8 +56,10 @@ def BackupFileToAnonynousfiles(path, FileNumber):
         return(f'|| {FileURL}')
     else:
         print("\n\n>>>> [ Upload was UNSUCCESSFUL. ]\n>>>> [ Press any key to Continue... ]\n\n")
-        input()
-        sys.exit()
+        print(f'{RecievedResponse}')
+        return("|| Error uploading to anonymousfiles ")
+        #input()
+        #sys.exit()
 
 
 def BackupToGoFile(path, FileNumber):                                   # GOFILE IS IN BETA, SO ERRORS MIGHT OCCUR.
@@ -65,7 +68,9 @@ def BackupToGoFile(path, FileNumber):                                   # GOFILE
 
     print(f'>> [ Trying to UPLOAD file# 0{FileNumber} to server 3 ]\n')
     files = {'file': open(path, 'rb')}
-    RecievedResponse = requests.post(f'https://{BestServerAvaliable}.gofile.io/uploadFile', files=files)
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36'}
+
+    RecievedResponse = requests.post(f'https://{BestServerAvaliable}.gofile.io/uploadFile', files=files, headers = headers)
     
     if(RecievedResponse.ok):
         FileURL = RecievedResponse.json()['data']['directLink']
@@ -122,18 +127,34 @@ paths = filedialog.askopenfilename(parent = root, title = "File To Backup", file
 root.destroy()
 
 
-        
-
 
 # -------------------- MAIN -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 for path in paths:
-  FileNumber += 1               
-  RecicvedMessageAnonfile = BackupFileToAnonfile(path, FileNumber)
-  #WriteMessage = WriteMessage +"\n" + RecicvedMessageAnonfile       # WriteMessage is the message which has to be written in the text file (at last) and Recieved message is the message that is returned by the BackupFile() Function for each file.
-  FileURLFromAnonymousfiles = BackupFileToAnonynousfiles(path, FileNumber)
-  FileURLFromGoFile = BackupToGoFile(path, FileNumber)
-  WriteMessage = WriteMessage + f'\n{RecicvedMessageAnonfile} {FileURLFromGoFile} {FileURLFromAnonymousfiles}'
+  FileNumber += 1  
+
+  try:
+      RecicvedMessageAnonfile = BackupFileToAnonfile(path, FileNumber)
+  except:
+      print("Error: 10054 [ Anonfile ]")
+      FileURLFromGoFile = ' '
+
+  time.sleep(10)
+  try:                          # In case the connection is forcibly closed by host (error: 10054) then the program should not get stuck, it must continue.
+      FileURLFromAnonymousfiles = BackupFileToAnonynousfiles(path, FileNumber)
+  except:
+      print("Error: 10054 [ Anonymousfiles ]")
+      FileURLFromAnonymousfiles = ' '
+
+  time.sleep(10)
+  try:                          # In case the connection is forcibly closed by host (error: 10054) then the program should not get stuck, it must continue.
+      FileURLFromGoFile = BackupToGoFile(path, FileNumber)
+  except:
+      print("Error: 10054 [ GoFile ]")
+      FileURLFromGoFile = ' '
+
+  WriteMessage = WriteMessage + f'\n{RecicvedMessageAnonfile} {FileURLFromGoFile} {FileURLFromAnonymousfiles}'  # WriteMessage is the message which has to be written in the text file (at last) and Recieved message is the message that is returned by the BackupFile() Function for each file.
+
 if (paths):                                                 # After all the files are uploaded, creating the text file that will contain all the links.
     WriteToFile(WriteMessage)
 else:                                                       # If no files were selected.
