@@ -3,8 +3,11 @@ import requests
 import tkinter
 from tkinter import filedialog
 import sys
+import os
 
 #------------------------------------------------------------------------------INPUT & PROCESSING------------------------------------------------------------------------------------------------------
+
+os.system('mode con: cols=128 lines=30')                                        # Resizing the CMD (Terminal) window
 
 FileID = input("Enter the FileID :")
 Fileinfo = requests.get(f'https://api.anonfiles.com/v2/file/{FileID}/info')     # Fetching File info using API
@@ -51,7 +54,12 @@ def Downloader(URL, TotalSize, Path):              # TotalSize in bytes in strin
             print(status, end='\r')
 
             f.write(chunk)
-    print(f"{status}[ Download Complete ]")
+    if(round(PercentageUsed, 2) == 100.0):
+        print(f'{status}[√]')
+        #print(f"{status}[ Download Complete ]")
+    else:
+        print(f'{status}[×]')
+
 
 #------------------------------------------------------------------------------MAIN--------------------------------------------------------------------------------------------------------------------
 
@@ -62,4 +70,5 @@ if(Path):
 else:
     print(" [ ERROR: No Path selected ] ")
 
+input(" [ Press Enter to continue... ] ")
 #------------------------------------------------------------------------------END---------------------------------------------------------------------------------------------------------------------
